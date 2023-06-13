@@ -24,18 +24,14 @@ public:
 	void pushBack(T&& data);
 	void popFront();
 	void popBack();
-	void resetFront();
-	void resetBack();
-	void insertBefore(T& data); // inserts before the iterator
-	void insertBefore(T&& data); // inserts before the iterator
-	void insertAfter(T& data); // inserts after the iterator
-	void insertAfter(T&& data); // inserts after the iterator
+	void insert(Node<T>* iterator, T& data); // inserts before the iterator
+	void insert(Node<T>* iterator, T&& data); // inserts before the iterator
 	void forward(); // advances forwardIterator
-	Node<T>* begin(); // returns head if not nullptr or end
+	Node<T>* begin(); // returns first element if exists or end
 	Node<T>* end(); // returns end
 	void reverse(); // advances reverseIterator
 	Node<T>* rbegin(); // returns begin
-	Node<T>* rend(); // returns tail if not nullptr or begin
+	Node<T>* rend(); // returns last element if exists or begin
 	void erase(Node<T>* iterator); // erases value at iterator then advances
 	// this has mutated into the way that I am going to access the data
 	Node<T>* forwardIterator;
@@ -46,8 +42,6 @@ private:
 	int count = 0;
 	Node<T>* head;
 	Node<T>* tail;
-	Node<T>* begin; // points 1 past head
-	Node<T>* end; // points 1 past tail
 };
 
 template <class T>
@@ -66,47 +60,34 @@ template <class T>
 LinkedList<T>::LinkedList()
 {
 	T dummy;
-	begin = new Node(dummy);
-	begin->prev = nullptr;
-	begin->next = nullptr;
-	end = new Node(dummy);
-	end->prev = nullptr;
-	end->next = nullptr;
+	head = new Node<T>(dummy);
+	tail = new Node<T>(dummy);
+	head->prev = nullptr;
+	head->next = tail;
+	tail->prev = head;
+	tail->next = nullptr;
 	init();
 }
 
 template <class T>
 LinkedList<T>::~LinkedList()
 {
-	delete begin;
-	delete end;
+	delete head;
+	delete tail;
 }
 
 template <class T>
 void LinkedList<T>::init()
 {
 	count = 0;
-	head = end;
-	tail = begin;
-	forwardIterator = nullptr;
-	reverseIterator = nullptr;
-	head->prev = begin;
-	tail->next = end;
+	forwardIterator = head->next;
+	reverseIterator = tail->prev;
 }
 
 template <class T>
 void LinkedList<T>::clear()
 {
-	//Node<T>* temp;
-
-	//while(head && head != end)
-	//{
-	//	temp = head->next;
-	//	delete head;
-	//	head = temp;
-	//}
-
-	// alternate method
+	// TODO: implement manual version without calling functions to compare performance
 	if (!empty())
 	{
 		for (forwardIterator = begin(); forwardIterator != end(); forwardIterator = forward())
@@ -133,114 +114,56 @@ bool LinkedList<T>::empty() const
 template <class T>
 void LinkedList<T>::pushFront(T& data)
 {
-	//if (!head && !tail)
-	//{
-	//	head = new Node<T>(data);
-	//	head->prev = nullptr;
-	//	head->next = nullptr;
-	//	tail = head;
-	//}
-	//else
-	//{
-	//	Node<T>* temp = new Node<T>(data);
-	//	temp->prev = nullptr;
-	//	temp->next = head;
-	//	head->prev = temp;
-	//	head = temp;
-	//}
-	
-	
-
+	Node<T>* newNode = new Node<T>(data);
+	newNode->prev = head;
+	newNode->next = head->next;
+	head->next->prev = newNode;
+	head->next = newNode;
 	count++;
 }
 
 template <class T>
 void LinkedList<T>::pushFront(T&& data)
 {
-	// if head is null tail is too
-	if (!head)
-	{
-		head = new Node<T>(data);
-		head->prev = nullptr;
-		head->next = nullptr;
-		tail = head;
-	}
-	else
-	{
-		Node<T>* temp = new Node<T>(data);
-		temp->prev = nullptr;
-		temp->next = head;
-		head->prev = temp;
-		head = temp;
-	}
-
+	Node<T>* newNode = new Node<T>(data);
+	newNode->prev = head;
+	newNode->next = head->next;
+	head->next->prev = newNode;
+	head->next = newNode;
 	count++;
 }
 
 template <class T>
 void LinkedList<T>::pushBack(T& data)
 {
-	if (!head)
-	{
-		tail = new Node<T>(data);
-		tail->prev = nullptr;
-		tail->next = nullptr;
-		head = tail;
-	}
-	else
-	{
-		Node<T>* temp = new Node<T>(data);
-		temp->next = nullptr;
-		temp->prev = tail;
-		tail->next = temp;
-		tail = temp;
-	}
-
+	Node<T>* newNode = new Node<T>(data);
+	newNode->prev = tail->prev;
+	newNode->next = tail;
+	tail->prev->next = newNode;
+	tail->prev = newNode;
 	count++;
 }
 
 template <class T>
 void LinkedList<T>::pushBack(T&& data)
 {
-	if (!head)
-	{
-		tail = new Node<T>(data);
-		tail->prev = nullptr;
-		tail->next = nullptr;
-		head = tail;
-	}
-	else
-	{
-		Node<T>* temp = new Node<T>(data);
-		temp->next = nullptr;
-		temp->prev = tail;
-		tail->next = temp;
-		tail = temp;
-	}
-
+	Node<T>* newNode = new Node<T>(data);
+	newNode->prev = tail->prev;
+	newNode->next = tail;
+	tail->prev->next = newNode;
+	tail->prev = newNode;
 	count++;
 }
 
 template <class T>
 void LinkedList<T>::popFront()
 {
-	if (head)
+	if (!empty())
 	{
-		if (head->next)
-		{
-			Node<T>* temp = head->next;
-			head->next = nullptr;
-			delete head;
-			head = temp;
-			head->prev = nullptr;
-		}
-		else
-		{
-			delete head;
-			head = nullptr;
-			tail = nullptr;
-		}
-
+		Node<T>* temp = head->next;
+		head->next = temp->next;
+		temp->next->prev = head;
+		delete temp;
 		count--;
 	}
 }
@@ -248,201 +171,89 @@ void LinkedList<T>::popFront()
 template <class T>
 void LinkedList<T>::popBack()
 {
-	if (tail)
+	if (!empty())
 	{
-		if (tail->prev)
-		{
-			Node<T>* temp = tail->prev;
-			tail->prev = nullptr;
-			delete tail;
-			tail = temp;
-			tail->next = nullptr;
-		}
-		else
-		{
-			delete tail;
-			head = nullptr;
-			tail = nullptr;
-		}
-
+		Node<T>* temp = tail->prev;
+		tail->prev = temp->prev;
+		temp->prev->next = tail;
+		delete temp;
 		count--;
 	}
 }
 
 template <class T>
-void LinkedList<T>::resetFront()
+void LinkedList<T>::insert(Node<T>* iterator, T& data)
 {
-	iterator = head;
+	Node<T>* newNode = new Node<T>(data);
+	Node<T>* temp = iterator->prev;
+	newNode->prev = temp;
+	newNode->next = iterator;
+	temp->next = newNode;
+	iterator->prev = newNode;
+	count++;
 }
 
 template <class T>
-void LinkedList<T>::resetBack()
+void LinkedList<T>::insert(Node<T>* iterator, T&& data)
 {
-	iterator = tail;
+	Node<T>* newNode = new Node<T>(data);
+	Node<T>* temp = iterator->prev;
+	newNode->prev = temp;
+	newNode->next = iterator;
+	temp->next = newNode;
+	iterator->prev = newNode;
+	count++;
 }
 
 template <class T>
-void LinkedList<T>::insertBefore(T& data)
+void LinkedList<T>::forward()
 {
-	if (!head)
-	{
-		Node<T>* temp = new Node(data);
-		head = temp;
-		tail = temp;
-		iterator = temp;
-		temp->next = nullptr;
-		temp->prev = nullptr;
-	}
-	else if (iterator && iterator->prev)
+	forwardIterator = forwardIterator->next;
+}
+
+template <class T>
+Node<T>* LinkedList<T>::begin()
+{
+	if (head->next)
+		return head->next;
+	return tail;
+}
+
+template <class T>
+Node<T>* LinkedList<T>::end()
+{
+	return tail;
+}
+
+template <class T>
+void LinkedList<T>::reverse()
+{
+	reverseIterator = reverseIterator->prev;
+}
+
+template <class T>
+Node<T>* LinkedList<T>::rbegin()
+{
+	return head;
+}
+
+template <class T>
+Node<T>* LinkedList<T>::rend()
+{
+	if (tail->prev)
+		return tail->prev;
+	return head;
+}
+
+template <class T>
+void LinkedList<T>::erase(Node<T>* iterator)
+{
+	if (!empty())
 	{
 		Node<T>* temp = iterator->prev;
-		Node<T>* newNode = new Node(data);
-		newNode->prev = temp;
-		newNode->next = iterator;
-		iterator->prev = newNode;
-		temp->next = newNode;
-	}
-	else // iterator invalid but head is not
-	{
-		Node<T>* newNode = new Node(data);
-		head->prev = newNode;
-		newNode->next = head;
-		newNode->prev = nullptr;
-		head = newNode;
-	}
-	
-	count++;
+		temp->next = iterator->next;
+		iterator->prev = temp;
+		delete iterator;
+		count--;
+	}	
 }
-
-template <class T>
-void LinkedList<T>::insertBefore(T&& data)
-{
-	if (!head)
-	{
-		Node<T>* temp = new Node(data);
-		head = temp;
-		tail = temp;
-		iterator = temp;
-		temp->next = nullptr;
-		temp->prev = nullptr;
-	}
-	else if (iterator && iterator->prev)
-	{
-		Node<T>* temp = iterator->prev;
-		Node<T>* newNode = new Node(data);
-		newNode->prev = temp;
-		newNode->next = iterator;
-		iterator->prev = newNode;
-		temp->next = newNode;
-	}
-	else // iterator invalid but head is not
-	{
-		Node<T>* newNode = new Node(data);
-		head->prev = newNode;
-		newNode->next = head;
-		newNode->prev = nullptr;
-		head = newNode;
-	}
-
-	count++;
-}
-
-template <class T>
-void LinkedList<T>::insertAfter(T& data)
-{
-	if (!tail)
-	{
-		Node<T>* temp = new Node(data);
-		head = temp;
-		tail = temp;
-		iterator = temp;
-		temp->next = nullptr;
-		temp->prev = nullptr;
-	}
-	else if (iterator && iterator->next)
-	{
-		Node<T>* temp = iterator->next;
-		Node<T>* newNode = new Node(data);
-		newNode->prev = iterator;
-		newNode->next = temp;
-		iterator->next = newNode;
-		temp->prev = newNode;
-	}
-	else
-	{
-		Node<T>* newNode = new Node(data);
-		tail->next = newNode;
-		newNode->next = nullptr;
-		newNode->prev = tail;
-		tail = newNode;
-	}
-
-	count++;
-}
-
-template <class T>
-void LinkedList<T>::insertAfter(T&& data)
-{
-	if (!tail)
-	{
-		Node<T>* temp = new Node(data);
-		head = temp;
-		tail = temp;
-		iterator = temp;
-		temp->next = nullptr;
-		temp->prev = nullptr;
-	}
-	else if (iterator && iterator->next)
-	{
-		Node<T>* temp = iterator->next;
-		Node<T>* newNode = new Node(data);
-		newNode->prev = iterator;
-		newNode->next = temp;
-		iterator->next = newNode;
-		temp->prev = newNode;
-	}
-	else
-	{
-		Node<T>* newNode = new Node(data);
-		tail->next = newNode;
-		newNode->next = nullptr;
-		newNode->prev = tail;
-		tail = newNode;
-	}
-
-	count++;
-}
-
-template <class T>
-T& LinkedList<T>::get()
-{
-	return iterator->data;
-}
-
-template <class T>
-T& LinkedList<T>::forward()
-{
-	Node<T>* temp = iterator;
-	iterator = iterator->next;
-	return temp->data;
-}
-
-template <class T>
-T& LinkedList<T>::reverse()
-{
-	Node<T>* temp = iterator;
-}
-
-template <class T>
-T& LinkedList<T>::begin()
-{
-
-}
-
-template <class T>
-T& LinkedList<T>::end()
-{
-
-}
-
-
