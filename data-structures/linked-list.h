@@ -1,3 +1,5 @@
+#pragma once
+
 template <class T>
 class Node
 {
@@ -87,10 +89,10 @@ void LinkedList<T>::init()
 template <class T>
 void LinkedList<T>::clear()
 {
-	// TODO: implement manual version without calling functions to compare performance
 	if (!empty())
 	{
-		for (forwardIterator = begin(); forwardIterator != end(); forwardIterator = forward())
+		forwardIterator = begin();
+		while (forwardIterator != end())
 		{
 			erase(forwardIterator);
 		}
@@ -185,30 +187,53 @@ template <class T>
 void LinkedList<T>::insert(Node<T>* iterator, T& data)
 {
 	Node<T>* newNode = new Node<T>(data);
-	Node<T>* temp = iterator->prev;
-	newNode->prev = temp;
-	newNode->next = iterator;
-	temp->next = newNode;
-	iterator->prev = newNode;
+	
+	if (iterator == forwardIterator)
+	{
+		newNode->prev = iterator->prev;
+		newNode->next = iterator;
+		iterator->prev->next = newNode;
+		iterator->prev = newNode;
+	}
+	else
+	{
+		newNode->prev = iterator;
+		newNode->next = iterator->next;
+		iterator->next->prev = newNode;
+		iterator->next = newNode;
+	}
+
 	count++;
 }
 
 template <class T>
 void LinkedList<T>::insert(Node<T>* iterator, T&& data)
 {
-	Node<T>* newNode = new Node<T>(data);
-	Node<T>* temp = iterator->prev;
-	newNode->prev = temp;
-	newNode->next = iterator;
-	temp->next = newNode;
-	iterator->prev = newNode;
-	count++;
+	NNode<T>* newNode = new Node<T>(data);
+	
+	if (iterator == forwardIterator)
+	{
+		newNode->prev = iterator->prev;
+		newNode->next = iterator;
+		iterator->prev->next = newNode;
+		iterator->prev = newNode;
+	}
+	else
+	{
+		newNode->prev = iterator;
+		newNode->next = iterator->next;
+		iterator->next->prev = newNode;
+		iterator->next = newNode;
+	}
 }
 
 template <class T>
 void LinkedList<T>::forward()
 {
-	forwardIterator = forwardIterator->next;
+	if (!empty())
+		forwardIterator = forwardIterator->next;
+	else
+		forwardIterator = end();
 }
 
 template <class T>
@@ -228,7 +253,10 @@ Node<T>* LinkedList<T>::end()
 template <class T>
 void LinkedList<T>::reverse()
 {
-	reverseIterator = reverseIterator->prev;
+	if (!empty())
+		reverseIterator = reverseIterator->prev;
+	else
+		reverseIterator = rbegin();
 }
 
 template <class T>
@@ -245,15 +273,20 @@ Node<T>* LinkedList<T>::rend()
 	return head;
 }
 
+// removes element then advances forward iterator forward and reverse iterator backwards
 template <class T>
 void LinkedList<T>::erase(Node<T>* iterator)
 {
 	if (!empty())
 	{
-		Node<T>* temp = iterator->prev;
-		temp->next = iterator->next;
-		iterator->prev = temp;
+		if (iterator == forwardIterator)
+			forwardIterator = iterator->next;
+		else
+			reverseIterator = iterator->prev;
+
+		iterator->prev->next = iterator->next;
+		iterator->next->prev = iterator->prev;
 		delete iterator;
 		count--;
-	}	
+	}
 }

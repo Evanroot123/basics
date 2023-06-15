@@ -3,6 +3,9 @@
 mkdir ..\..\build
 pushd ..\..\build
 
-cl /EHsc -Zi ..\source\data-structures\main.cpp /I ..\source\data-structures\
+set files=..\source\data-structures\main.cpp
+set files=%files% ..\source\data-structures\linked-list-tests.cpp
+
+cl /EHsc /FAsc -Zi %files% /I ..\source\data-structures\ user32.lib
 
 popd
